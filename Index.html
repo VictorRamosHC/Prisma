@@ -1,0 +1,1041 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Prisma · Pintura Residencial</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ═══════════════════════════════════════════
+       DESIGN TOKENS — Azul-Marinho · Esmeralda
+    ═══════════════════════════════════════════ */
+    :root {
+      --c-bg:        #07090d;
+      --c-bg-mid:    #090d14;
+      --c-surface:   #0d1520;
+      --c-surface2:  #111d2c;
+      --c-border:    rgba(45,212,160,0.07);
+      --c-border-hi: rgba(45,212,160,0.16);
+
+      --c-text:   #dceaf5;
+      --c-muted:  rgba(180,210,228,0.48);
+      --c-muted2: rgba(180,210,228,0.22);
+
+      --c-green:      #2dd4a0;
+      --c-green-dim:  rgba(45,212,160,0.10);
+      --c-green-glow: rgba(45,212,160,0.30);
+
+      --c-blue:       #4a90d9;
+      --c-blue-dim:   rgba(74,144,217,0.10);
+
+      --c-teal:       #0f9e8a;
+      --c-navy:       #1b3560;
+      --c-mint:       #7be8c2;
+
+      --grad-main: linear-gradient(135deg, #2dd4a0 0%, #4a90d9 55%, #0f9e8a 100%);
+      --grad-soft: linear-gradient(135deg,
+        rgba(45,212,160,0.55) 0%,
+        rgba(74,144,217,0.55) 55%,
+        rgba(15,158,138,0.55) 100%);
+
+      --font-display: 'Cormorant Garamond', serif;
+      --font-body:    'DM Sans', sans-serif;
+      --font-mono:    'Space Mono', monospace;
+
+      --ease-expo: cubic-bezier(0.16, 1, 0.3, 1);
+      --ease-soft: cubic-bezier(0.45, 0, 0.55, 1);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--c-bg);
+      color: var(--c-text);
+      font-family: var(--font-body);
+      overflow-x: hidden;
+      cursor: none;
+      /* ── desativa completamente o highlight de toque ── */
+      -webkit-tap-highlight-color: rgba(0,0,0,0);
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* Desativa toque visível em tudo */
+    *, *::after, *::before {
+      -webkit-tap-highlight-color: rgba(0,0,0,0) !important;
+      -webkit-tap-highlight-color: transparent !important;
+    }
+    a, button, input, select, textarea {
+      outline: none;
+      -webkit-tap-highlight-color: rgba(0,0,0,0) !important;
+      tap-highlight-color: transparent !important;
+      touch-action: manipulation;
+    }
+
+    /* ── GRAIN / NOISE ── */
+    body::before {
+      content: '';
+      position: fixed; inset: 0; z-index: 1;
+      pointer-events: none;
+      opacity: 0.38;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E");
+    }
+
+    /* ── CURSOR (só pointer fino = mouse) ── */
+    #cursor, #cursor-ring {
+      display: none;
+      pointer-events: none;
+    }
+    @media (pointer: fine) {
+      body { cursor: none; }
+      #cursor {
+        display: block;
+        position: fixed; top: 0; left: 0; z-index: 9999;
+        width: 8px; height: 8px;
+        background: var(--c-green);
+        border-radius: 50%;
+        transform: translate(-50%,-50%);
+        mix-blend-mode: screen;
+        transition: width .25s var(--ease-expo), height .25s var(--ease-expo), background .4s;
+        will-change: left, top;
+      }
+      #cursor-ring {
+        display: block;
+        position: fixed; top: 0; left: 0; z-index: 9998;
+        width: 38px; height: 38px;
+        border: 1px solid rgba(45,212,160,0.32);
+        border-radius: 50%;
+        transform: translate(-50%,-50%);
+        transition: border-color .4s, width .3s var(--ease-expo), height .3s var(--ease-expo);
+        will-change: left, top;
+      }
+    }
+
+    /* ════════════ NAV ════════════ */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 200;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 1.6rem 3.5rem;
+      background: rgba(7,9,13,0.60);
+      backdrop-filter: blur(28px) saturate(1.5);
+      -webkit-backdrop-filter: blur(28px) saturate(1.5);
+      border-bottom: 1px solid var(--c-border);
+      transition: padding .55s var(--ease-expo), background .4s, border-color .4s;
+    }
+    nav.scrolled {
+      padding: 1rem 3.5rem;
+      background: rgba(7,9,13,0.90);
+      border-color: var(--c-border-hi);
+    }
+    .nav-logo {
+      font-family: var(--font-display);
+      font-size: 1.75rem; font-weight: 300;
+      letter-spacing: .24em; color: var(--c-text);
+      text-decoration: none;
+    }
+    .nav-logo span {
+      background: var(--grad-main);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text; background-size: 220%;
+      animation: gradFlow 9s ease infinite;
+    }
+    @keyframes gradFlow {
+      0%,100% { background-position: 0% 50%; }
+      50%      { background-position: 100% 50%; }
+    }
+    .nav-links { display: flex; gap: 2.5rem; list-style: none; }
+    .nav-links a {
+      font-family: var(--font-mono); font-size: .67rem;
+      letter-spacing: .14em; text-transform: uppercase;
+      color: var(--c-muted); text-decoration: none;
+      position: relative; transition: color .35s;
+    }
+    .nav-links a::after {
+      content: ''; position: absolute; bottom: -4px; left: 0; right: 0;
+      height: 1px; background: var(--c-green);
+      transform: scaleX(0); transform-origin: left;
+      transition: transform .4s var(--ease-expo);
+    }
+    .nav-links a:hover { color: var(--c-text); }
+    .nav-links a:hover::after { transform: scaleX(1); }
+    .nav-cta {
+      font-family: var(--font-mono); font-size: .67rem;
+      letter-spacing: .14em; text-transform: uppercase;
+      padding: .62rem 1.5rem;
+      border: 1px solid rgba(45,212,160,.35); color: var(--c-green);
+      text-decoration: none; border-radius: 2px;
+      transition: background .35s, color .35s, border-color .35s, box-shadow .35s;
+    }
+    .nav-cta:hover {
+      background: var(--c-green); color: #07090d;
+      border-color: var(--c-green);
+      box-shadow: 0 0 30px var(--c-green-glow);
+    }
+
+    /* ════════════ HERO ════════════ */
+    #hero {
+      min-height: 100vh;
+      display: flex; flex-direction: column; justify-content: center;
+      padding: 0 3.5rem;
+      position: relative; overflow: hidden;
+    }
+
+    /* Blobs de fundo */
+    .hero-aura { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+    .aura-b {
+      position: absolute; border-radius: 50%;
+      filter: blur(110px); opacity: 0;
+    }
+    .aura-b:nth-child(1) {
+      width: 58vw; height: 58vw; top: -18%; right: -10%;
+      background: radial-gradient(circle, rgba(45,212,160,0.13) 0%, transparent 70%);
+      animation: bIn 2s .2s var(--ease-expo) forwards, bFloat1 20s 2.2s ease-in-out infinite alternate;
+    }
+    .aura-b:nth-child(2) {
+      width: 42vw; height: 42vw; bottom: -12%; left: -8%;
+      background: radial-gradient(circle, rgba(74,144,217,0.11) 0%, transparent 70%);
+      animation: bIn 2s .5s var(--ease-expo) forwards, bFloat2 24s 2.5s ease-in-out infinite alternate;
+    }
+    .aura-b:nth-child(3) {
+      width: 26vw; height: 26vw; top: 28%; right: 22%;
+      background: radial-gradient(circle, rgba(15,158,138,0.09) 0%, transparent 70%);
+      animation: bIn 2s .8s var(--ease-expo) forwards, bFloat3 28s 3s ease-in-out infinite alternate;
+    }
+    @keyframes bIn      { to { opacity: 1; } }
+    @keyframes bFloat1  { to { transform: translate(4%,5%) scale(1.07); } }
+    @keyframes bFloat2  { to { transform: translate(-4%,-6%) scale(1.05); } }
+    @keyframes bFloat3  { to { transform: translate(5%,-4%) scale(.95); } }
+
+    /* Grade sutil */
+    .hero-grid {
+      position: absolute; inset: 0; pointer-events: none;
+      background-image:
+        linear-gradient(rgba(45,212,160,.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(45,212,160,.025) 1px, transparent 1px);
+      background-size: 72px 72px;
+      -webkit-mask: radial-gradient(ellipse 75% 75% at 62% 38%, black 20%, transparent 100%);
+      mask: radial-gradient(ellipse 75% 75% at 62% 38%, black 20%, transparent 100%);
+    }
+
+    .hero-content { position: relative; z-index: 2; }
+
+    .hero-eyebrow {
+      display: inline-flex; align-items: center; gap: .8rem;
+      font-family: var(--font-mono); font-size: .62rem;
+      letter-spacing: .22em; text-transform: uppercase;
+      color: var(--c-green); margin-bottom: 2rem;
+      opacity: 0; animation: up 1s .15s var(--ease-expo) forwards;
+    }
+    .eyebrow-line { width: 32px; height: 1px; background: linear-gradient(90deg, var(--c-green), transparent); }
+
+    .hero-h1 {
+      font-family: var(--font-display);
+      font-size: clamp(4rem, 9.5vw, 9.5rem);
+      font-weight: 300; line-height: .92; letter-spacing: -.025em;
+      opacity: 0; animation: up 1.1s .3s var(--ease-expo) forwards;
+    }
+    .hero-h1 em {
+      font-style: italic;
+      background: var(--grad-main); -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent; background-clip: text;
+      background-size: 220%; animation: gradFlow 8s ease infinite;
+    }
+    .hero-rule {
+      width: 56px; height: 1px;
+      background: var(--grad-main); margin: 2.4rem 0;
+      opacity: 0; animation: up 1s .5s var(--ease-expo) forwards;
+    }
+    .hero-sub {
+      max-width: 470px; font-size: 1rem; font-weight: 300;
+      line-height: 1.82; color: var(--c-muted);
+      margin-bottom: 3rem;
+      opacity: 0; animation: up 1s .62s var(--ease-expo) forwards;
+    }
+    .hero-ctas {
+      display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;
+      opacity: 0; animation: up 1s .76s var(--ease-expo) forwards;
+    }
+    @keyframes up {
+      from { opacity: 0; transform: translateY(22px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Scroll hint */
+    .hero-scroll {
+      position: absolute; bottom: 2.8rem; left: 50%;
+      transform: translateX(-50%);
+      display: flex; flex-direction: column; align-items: center; gap: .6rem;
+      z-index: 2; opacity: 0;
+      animation: up 1s 1.3s var(--ease-expo) forwards;
+    }
+    .scroll-track {
+      width: 1px; height: 54px;
+      background: linear-gradient(to bottom, var(--c-green), transparent);
+      position: relative; overflow: hidden;
+    }
+    .scroll-track::after {
+      content: ''; position: absolute; top: -100%; left: 0;
+      width: 100%; height: 100%; background: var(--c-green);
+      animation: drop 2.4s ease-in-out infinite;
+    }
+    @keyframes drop {
+      0%  { top: -100%; opacity: 1; }
+      75% { top: 100%;  opacity: .3; }
+      100%{ top: 100%;  opacity: 0; }
+    }
+    .scroll-lbl {
+      font-family: var(--font-mono); font-size: .52rem;
+      letter-spacing: .22em; text-transform: uppercase; color: var(--c-muted2);
+    }
+
+    /* ════════════ BOTÕES ════════════ */
+    .btn-p {
+      display: inline-flex; align-items: center; gap: .55rem;
+      padding: .95rem 2.2rem;
+      background: var(--c-green); color: #07090d;
+      font-family: var(--font-mono); font-size: .7rem; font-weight: 700;
+      letter-spacing: .12em; text-transform: uppercase;
+      text-decoration: none; border: none; border-radius: 2px; cursor: none;
+      position: relative; overflow: hidden;
+      transition: transform .3s var(--ease-expo), box-shadow .35s;
+    }
+    .btn-p::before {
+      content: ''; position: absolute; inset: 0;
+      background: linear-gradient(135deg,rgba(255,255,255,.14),transparent);
+      opacity: 0; transition: opacity .3s;
+    }
+    .btn-p:hover { transform: translateY(-3px); box-shadow: 0 18px 44px rgba(45,212,160,.38); }
+    .btn-p:hover::before { opacity: 1; }
+    .btn-p:active  { transform: translateY(-1px); }
+
+    .btn-g {
+      display: inline-flex; align-items: center; gap: .55rem;
+      padding: .95rem 1.9rem;
+      background: transparent; color: var(--c-text);
+      font-family: var(--font-mono); font-size: .7rem;
+      letter-spacing: .12em; text-transform: uppercase;
+      text-decoration: none;
+      border: 1px solid var(--c-border-hi); border-radius: 2px; cursor: none;
+      transition: border-color .35s, color .35s, background .35s;
+    }
+    .btn-g:hover {
+      border-color: rgba(45,212,160,.35);
+      color: var(--c-green); background: rgba(45,212,160,.04);
+    }
+
+    /* ════════════ SEÇÃO BASE ════════════ */
+    section { position: relative; padding: 8.5rem 3.5rem; }
+
+    .s-eyebrow {
+      display: inline-flex; align-items: center; gap: .75rem;
+      font-family: var(--font-mono); font-size: .59rem;
+      letter-spacing: .22em; text-transform: uppercase;
+      color: var(--c-green); margin-bottom: 1.4rem;
+    }
+    .s-eline { width: 24px; height: 1px; background: var(--c-green); }
+    .s-title {
+      font-family: var(--font-display);
+      font-size: clamp(2.4rem, 5.5vw, 4.2rem);
+      font-weight: 300; line-height: 1.08; letter-spacing: -.02em;
+      margin-bottom: 1.2rem;
+    }
+    .s-lead {
+      font-size: .97rem; font-weight: 300;
+      color: var(--c-muted); line-height: 1.85; max-width: 540px;
+    }
+
+    /* ════════════ SOBRE / BENTO ════════════ */
+    #sobre { background: var(--c-bg-mid); }
+
+    .bento {
+      display: grid; grid-template-columns: repeat(12,1fr);
+      gap: 1px; background: var(--c-border);
+      border: 1px solid var(--c-border); border-radius: 6px;
+      overflow: hidden; margin-top: 4.5rem;
+    }
+    .bc {
+      background: var(--c-surface); padding: 2.7rem;
+      position: relative; overflow: hidden;
+      transition: background .5s var(--ease-expo);
+    }
+    .bc::before {
+      content: ''; position: absolute; inset: 0;
+      background: radial-gradient(ellipse 80% 80% at 0% 0%, rgba(45,212,160,.07), transparent);
+      opacity: 0; transition: opacity .6s var(--ease-expo);
+    }
+    .bc:hover { background: var(--c-surface2); }
+    .bc:hover::before { opacity: 1; }
+    .b1 { grid-column:span 7; grid-row:span 2; }
+    .b2,.b3 { grid-column:span 5; }
+    .b4,.b5,.b6 { grid-column:span 4; }
+
+    .bc h3 { font-family:var(--font-display); font-size:2rem; font-weight:300; margin-bottom:.9rem; line-height:1.1; }
+    .bc p  { font-size:.9rem; font-weight:300; color:var(--c-muted); line-height:1.8; position:relative; z-index:1; }
+    .bc-num {
+      font-family:var(--font-display);
+      font-size: clamp(3.8rem,6.5vw,6rem); font-weight:300; line-height:1;
+      background: var(--grad-main); -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+      background-clip:text; background-size:220%; animation:gradFlow 9s ease infinite;
+      position:relative; z-index:1;
+    }
+    .bc-ico { font-size:1.6rem; margin-bottom:1rem; position:relative; z-index:1; }
+    .bc-tag {
+      font-family:var(--font-mono); font-size:.56rem; letter-spacing:.18em;
+      text-transform:uppercase; color:var(--c-green); margin-bottom:.7rem;
+      position:relative; z-index:1;
+    }
+
+    /* ════════════ SERVIÇOS ════════════ */
+    #servicos { background: var(--c-bg); }
+
+    .srv-header {
+      display:flex; justify-content:space-between; align-items:flex-end;
+      flex-wrap:wrap; gap:2.5rem; margin-bottom:4.5rem;
+    }
+    .srv-grid {
+      display:grid; grid-template-columns:repeat(auto-fill,minmax(290px,1fr));
+      gap:1px; background:var(--c-border);
+      border:1px solid var(--c-border); border-radius:6px; overflow:hidden;
+    }
+    .srv-card {
+      background:var(--c-bg); padding:2.7rem 2.2rem;
+      position:relative; overflow:hidden;
+      transition:background .5s var(--ease-expo);
+    }
+    .srv-card::before {
+      content:''; position:absolute; top:0; left:0; right:0; height:1px;
+      background:var(--ac);
+      transform:scaleX(0); transform-origin:left;
+      transition:transform .55s var(--ease-expo);
+    }
+    .srv-card::after {
+      content:''; position:absolute; inset:0;
+      background:radial-gradient(ellipse 70% 60% at 50% 0%, var(--ac-dim), transparent);
+      opacity:0; transition:opacity .55s var(--ease-expo);
+    }
+    .srv-card:hover { background:var(--c-surface); }
+    .srv-card:hover::before { transform:scaleX(1); }
+    .srv-card:hover::after  { opacity:1; }
+    .srv-card[data-i="0"]{--ac:var(--c-green);  --ac-dim:rgba(45,212,160,.07);}
+    .srv-card[data-i="1"]{--ac:#4a90d9;          --ac-dim:rgba(74,144,217,.07);}
+    .srv-card[data-i="2"]{--ac:#0f9e8a;          --ac-dim:rgba(15,158,138,.07);}
+    .srv-card[data-i="3"]{--ac:#7be8c2;          --ac-dim:rgba(123,232,194,.07);}
+    .srv-card[data-i="4"]{--ac:#60b8f5;          --ac-dim:rgba(96,184,245,.07);}
+    .srv-card[data-i="5"]{--ac:#34c98d;          --ac-dim:rgba(52,201,141,.07);}
+    .srv-num {
+      font-family:var(--font-mono); font-size:.58rem; color:var(--ac);
+      letter-spacing:.2em; margin-bottom:1.5rem; position:relative; z-index:1;
+    }
+    .srv-card h4 {
+      font-family:var(--font-display); font-size:1.45rem; font-weight:400;
+      margin-bottom:.9rem; position:relative; z-index:1;
+    }
+    .srv-card p {
+      font-size:.88rem; font-weight:300; color:var(--c-muted);
+      line-height:1.75; position:relative; z-index:1;
+    }
+
+    /* ════════════ DIFERENCIAIS ════════════ */
+    #diferenciais { background: var(--c-bg-mid); }
+
+    .dif-layout {
+      display:grid; grid-template-columns:1fr 1fr;
+      gap:6rem; align-items:center; margin-top:5rem;
+    }
+    .dif-visual {
+      position:relative; height:480px;
+      display:flex; align-items:center; justify-content:center;
+    }
+    .orbit {
+      position:absolute; border-radius:50%; border:1px solid;
+    }
+    .or1 {
+      width:240px; height:240px;
+      border-color:rgba(45,212,160,.12);
+      background:conic-gradient(from 0deg,
+        rgba(45,212,160,.2), rgba(74,144,217,.2),
+        rgba(15,158,138,.2), rgba(45,212,160,.2));
+      filter:blur(.5px);
+      animation:spin 28s linear infinite;
+    }
+    .or2 {
+      width:350px; height:350px;
+      border-color:rgba(74,144,217,.07); background:transparent;
+      animation:spin 42s linear infinite reverse;
+    }
+    .or2::before {
+      content:''; position:absolute; top:-3px; left:50%;
+      width:7px; height:7px; background:var(--c-green); border-radius:50%;
+      box-shadow:0 0 14px var(--c-green-glow);
+      transform:translateX(-50%);
+    }
+    .or3 {
+      width:162px; height:162px;
+      border-color:rgba(45,212,160,.14);
+      background:radial-gradient(circle, rgba(45,212,160,.12), rgba(15,158,138,.08), transparent 70%);
+      animation:spin 18s linear infinite;
+    }
+    .or3::before {
+      content:''; position:absolute; bottom:-3px; right:-3px;
+      width:6px; height:6px; background:var(--c-blue); border-radius:50%;
+      box-shadow:0 0 10px rgba(74,144,217,.6);
+    }
+    @keyframes spin { to { transform:rotate(360deg); } }
+
+    .prism-c { position:relative; z-index:2; text-align:center; }
+    .prism-ltr {
+      font-family:var(--font-display); font-size:6.5rem; font-weight:300; line-height:1;
+      background:var(--grad-main); -webkit-background-clip:text;
+      -webkit-text-fill-color:transparent; background-clip:text;
+      background-size:220%; animation:gradFlow 7s ease infinite;
+      filter:drop-shadow(0 0 28px rgba(45,212,160,.22));
+    }
+    .prism-lbl {
+      font-family:var(--font-mono); font-size:.57rem; letter-spacing:.26em;
+      text-transform:uppercase; color:var(--c-muted2); margin-top:.3rem;
+    }
+
+    .dif-list { list-style:none; display:flex; flex-direction:column; }
+    .dif-item {
+      display:flex; gap:1.4rem; align-items:flex-start;
+      padding:1.9rem 0; border-bottom:1px solid var(--c-border);
+      transition:border-color .4s;
+    }
+    .dif-item:first-child { padding-top:0; }
+    .dif-item:last-child  { border-bottom:none; padding-bottom:0; }
+    .dif-item:hover { border-color:var(--c-border-hi); }
+    .dif-idx {
+      font-family:var(--font-mono); font-size:.55rem;
+      letter-spacing:.15em; color:var(--c-green);
+      margin-top:.35rem; flex-shrink:0;
+    }
+    .dif-item h5 { font-family:var(--font-display); font-size:1.18rem; font-weight:400; margin-bottom:.4rem; }
+    .dif-item p  { font-size:.88rem; font-weight:300; color:var(--c-muted); line-height:1.72; }
+
+    /* ════════════ DEPOIMENTOS ════════════ */
+    #depoimentos { background:var(--c-bg); overflow:hidden; }
+
+    .testi-wrap {
+      overflow:hidden; margin-top:4rem;
+      -webkit-mask:linear-gradient(90deg,transparent 0%,black 8%,black 92%,transparent 100%);
+      mask:linear-gradient(90deg,transparent 0%,black 8%,black 92%,transparent 100%);
+    }
+    .testi-track {
+      display:flex; gap:1.2rem; width:max-content;
+      animation:marquee 34s linear infinite;
+    }
+    .testi-track:hover { animation-play-state:paused; }
+    @keyframes marquee { to { transform:translateX(-50%); } }
+
+    .t-card {
+      background:var(--c-surface); border:1px solid var(--c-border);
+      border-radius:4px; padding:2.2rem 2rem; width:330px; flex-shrink:0;
+      transition:border-color .45s, background .45s;
+    }
+    .t-card:hover { border-color:rgba(45,212,160,.22); background:var(--c-surface2); }
+    .t-stars { color:var(--c-green); font-size:.72rem; letter-spacing:.12em; margin-bottom:1.2rem; opacity:.8; }
+    .t-text {
+      font-family:var(--font-display); font-size:1.02rem; font-style:italic;
+      font-weight:300; line-height:1.72; color:var(--c-text); margin-bottom:1.5rem;
+    }
+    .t-auth {
+      font-family:var(--font-mono); font-size:.6rem; letter-spacing:.12em;
+      text-transform:uppercase; color:var(--c-muted2);
+    }
+
+    /* ════════════ ORÇAMENTO ════════════ */
+    #orcamento { background:var(--c-bg-mid); }
+
+    .orc-layout {
+      display:grid; grid-template-columns:1fr 1.15fr;
+      gap:6rem; margin-top:4.5rem; align-items:start;
+    }
+    .orc-info h3 {
+      font-family:var(--font-display); font-size:1.9rem;
+      font-weight:300; line-height:1.2; margin-bottom:1.2rem;
+    }
+    .orc-info > p {
+      font-size:.92rem; font-weight:300; color:var(--c-muted);
+      line-height:1.82; margin-bottom:2.2rem;
+    }
+    .orc-hi { list-style:none; display:flex; flex-direction:column; gap:1rem; }
+    .orc-hi li {
+      display:flex; align-items:center; gap:.9rem;
+      font-size:.9rem; font-weight:300; color:var(--c-muted);
+    }
+    .orc-hi li::before {
+      content:''; width:5px; height:5px; border-radius:50%;
+      background:var(--c-green); flex-shrink:0;
+      box-shadow:0 0 8px var(--c-green-glow);
+    }
+
+    .orc-form {
+      background:var(--c-surface); border:1px solid var(--c-border);
+      border-radius:6px; padding:2.8rem;
+      position:relative; overflow:hidden;
+    }
+    .orc-form::before {
+      content:''; position:absolute; top:0; left:0; right:0;
+      height:1px; background:var(--grad-main);
+    }
+    .f-title { font-family:var(--font-display); font-size:1.5rem; font-weight:300; margin-bottom:.4rem; }
+    .f-sub   { font-size:.8rem; font-weight:300; color:var(--c-muted2); margin-bottom:2.2rem; }
+    .f-grid  { display:grid; grid-template-columns:1fr 1fr; gap:1.1rem; }
+    .fg      { display:flex; flex-direction:column; gap:.45rem; }
+    .fg.full { grid-column:span 2; }
+
+    label {
+      font-family:var(--font-mono); font-size:.57rem;
+      letter-spacing:.16em; text-transform:uppercase; color:var(--c-muted);
+    }
+    input, select, textarea {
+      background:var(--c-surface2); border:1px solid var(--c-border);
+      border-radius:3px; padding:.8rem 1rem;
+      color:var(--c-text); font-family:var(--font-body);
+      font-size:.9rem; font-weight:300; outline:none;
+      -webkit-tap-highlight-color:rgba(0,0,0,0);
+      transition:border-color .35s, box-shadow .35s, background .35s;
+    }
+    input:focus, select:focus, textarea:focus {
+      border-color:rgba(45,212,160,.4);
+      background:rgba(45,212,160,.015);
+      box-shadow:0 0 0 3px rgba(45,212,160,.06);
+    }
+    input::placeholder, textarea::placeholder { color:var(--c-muted2); }
+    select option { background:#111d2c; }
+    textarea { resize:vertical; min-height:110px; }
+
+    .f-notice {
+      display:flex; align-items:flex-start; gap:.8rem;
+      background:rgba(45,212,160,.035); border:1px solid rgba(45,212,160,.11);
+      border-radius:3px; padding:1rem 1.1rem; margin-top:1.2rem;
+      font-size:.8rem; font-weight:300;
+      color:rgba(45,212,160,.72); line-height:1.55;
+    }
+
+    .btn-sub {
+      width:100%; margin-top:1.4rem; padding:1.05rem;
+      background:var(--c-green); color:#07090d;
+      font-family:var(--font-mono); font-size:.7rem; font-weight:700;
+      letter-spacing:.14em; text-transform:uppercase;
+      border:none; border-radius:3px; cursor:none;
+      position:relative; overflow:hidden;
+      -webkit-tap-highlight-color:rgba(0,0,0,0);
+      transition:transform .3s var(--ease-expo), box-shadow .35s, background .3s;
+    }
+    .btn-sub::before {
+      content:''; position:absolute; inset:0;
+      background:linear-gradient(135deg,rgba(255,255,255,.12),transparent);
+      opacity:0; transition:opacity .3s;
+    }
+    .btn-sub:hover { transform:translateY(-2px); box-shadow:0 14px 40px rgba(45,212,160,.38); }
+    .btn-sub:hover::before { opacity:1; }
+    .btn-sub:active { transform:translateY(0); }
+
+    .f-success {
+      display:none; text-align:center; padding:3.5rem 2rem;
+    }
+    .f-success.on { display:block; animation:up .7s var(--ease-expo) forwards; }
+    .f-success-ico { font-size:2.2rem; margin-bottom:1.4rem; }
+    .f-success h4 { font-family:var(--font-display); font-size:1.7rem; font-weight:300; margin-bottom:.8rem; }
+    .f-success p  { font-size:.9rem; font-weight:300; color:var(--c-muted); line-height:1.78; }
+    .f-success strong { color:var(--c-green); }
+
+    /* ════════════ CONTATO ════════════ */
+    #contato {
+      background:var(--c-bg); padding:5.5rem 3.5rem;
+      border-top:1px solid var(--c-border);
+    }
+    .ct-inner {
+      display:flex; justify-content:space-between;
+      align-items:flex-start; flex-wrap:wrap; gap:3rem;
+    }
+    .ct-brand .nav-logo { font-size:2.1rem; }
+    .ct-brand p { font-size:.88rem; font-weight:300; color:var(--c-muted); line-height:1.72; margin-top:.8rem; max-width:310px; }
+    .ct-col-ttl {
+      font-family:var(--font-mono); font-size:.56rem; letter-spacing:.2em;
+      text-transform:uppercase; color:var(--c-muted2); margin-bottom:1.2rem;
+    }
+    .ct-links { display:flex; flex-direction:column; gap:.9rem; }
+    .ct-link {
+      display:flex; align-items:center; gap:.8rem;
+      font-family:var(--font-mono); font-size:.67rem;
+      color:var(--c-muted); text-decoration:none;
+      letter-spacing:.08em; transition:color .35s;
+    }
+    .ct-dot {
+      width:5px; height:5px; border-radius:50%;
+      background:var(--c-green); flex-shrink:0;
+      box-shadow:0 0 7px var(--c-green-glow);
+    }
+    .ct-link:hover { color:var(--c-text); }
+
+    /* ════════════ FOOTER ════════════ */
+    footer {
+      background:#050708; padding:2rem 3.5rem;
+      border-top:1px solid var(--c-border);
+      display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem;
+    }
+    footer p, footer span {
+      font-family:var(--font-mono); font-size:.55rem;
+      color:rgba(180,210,228,.16); letter-spacing:.1em;
+    }
+
+    /* ════════════ REVEAL ════════════ */
+    .reveal {
+      opacity:0; transform:translateY(26px);
+      transition:opacity .9s var(--ease-expo), transform .9s var(--ease-expo);
+    }
+    .reveal.on { opacity:1; transform:translateY(0); }
+
+    /* ════════════ RESPONSIVO ════════════ */
+    @media (max-width: 960px) {
+      nav { padding:1.2rem 1.6rem; }
+      nav.scrolled { padding:.95rem 1.6rem; }
+      .nav-links { display:none; }
+      section { padding:5.5rem 1.6rem; }
+      #hero  { padding:0 1.6rem; }
+      .hero-h1 { font-size:clamp(3rem,14vw,5.5rem); }
+      .bento { display:flex; flex-direction:column; }
+      .dif-layout { grid-template-columns:1fr; gap:3.5rem; }
+      .dif-visual { height:310px; }
+      .orc-layout { grid-template-columns:1fr; gap:3rem; }
+      .f-grid { grid-template-columns:1fr; }
+      .fg.full { grid-column:span 1; }
+      .ct-inner { flex-direction:column; }
+      footer { flex-direction:column; text-align:center; }
+    }
+  </style>
+</head>
+<body>
+
+  <div id="cursor"></div>
+  <div id="cursor-ring"></div>
+
+  <!-- ═══ NAV ═══ -->
+  <nav id="nav">
+    <a class="nav-logo" href="#hero"><span>Prisma</span></a>
+    <ul class="nav-links">
+      <li><a href="#sobre">Sobre</a></li>
+      <li><a href="#servicos">Serviços</a></li>
+      <li><a href="#diferenciais">Diferenciais</a></li>
+      <li><a href="#depoimentos">Clientes</a></li>
+    </ul>
+    <a class="nav-cta" href="#orcamento">Solicitar Orçamento</a>
+  </nav>
+
+  <!-- ═══ HERO ═══ -->
+  <section id="hero">
+    <div class="hero-aura">
+      <div class="aura-b"></div>
+      <div class="aura-b"></div>
+      <div class="aura-b"></div>
+    </div>
+    <div class="hero-grid"></div>
+    <div class="hero-content">
+      <p class="hero-eyebrow"><span class="eyebrow-line"></span>Prisma Pintura Residencial</p>
+      <h1 class="hero-h1">Cores que<br/><em>transformam</em><br/>ambientes</h1>
+      <div class="hero-rule"></div>
+      <p class="hero-sub">Mais do que pintura — uma experiência de renovação para a sua casa. Qualidade, precisão e cuidado em cada detalhe, do primeiro contato à entrega final.</p>
+      <div class="hero-ctas">
+        <a href="#orcamento" class="btn-p">Pedir Orçamento &rarr;</a>
+        <a href="#sobre" class="btn-g">Conheça a Prisma</a>
+      </div>
+    </div>
+    <div class="hero-scroll">
+      <div class="scroll-track"></div>
+      <span class="scroll-lbl">Explorar</span>
+    </div>
+  </section>
+
+  <!-- ═══ SOBRE ═══ -->
+  <section id="sobre">
+    <div class="reveal">
+      <p class="s-eyebrow"><span class="s-eline"></span>Quem Somos</p>
+      <h2 class="s-title">Precisão e dedicação<br/>em cada projeto</h2>
+      <p class="s-lead">A Prisma nasceu da paixão por transformação. Com gestão próxima, equipe dedicada e logística impecável, entregamos resultados que superam expectativas.</p>
+    </div>
+    <div class="bento reveal" style="transition-delay:.12s">
+      <div class="bc b1">
+        <p class="bc-tag">Gestão &amp; Qualidade</p>
+        <h3>Atenção pessoal em cada projeto</h3>
+        <p>A Prisma é gerenciada diretamente por quem entende do negócio. Cada cliente recebe atenção individualizada — desde o diagnóstico do espaço até a entrega final. Logística eficiente, cronograma cumprido, resultado garantido.</p>
+        <br/>
+        <p>Nossa filosofia: respeitar o seu lar como se fosse o nosso. Protegemos móveis, preparamos superfícies com rigor e utilizamos apenas materiais de primeira linha para garantir durabilidade e beleza que duram anos.</p>
+      </div>
+      <div class="bc b2">
+        <p class="bc-tag">Projetos Concluídos</p>
+        <div class="bc-num">250+</div>
+        <p>Residências transformadas com excelência e cuidado.</p>
+      </div>
+      <div class="bc b3">
+        <p class="bc-tag">Satisfação</p>
+        <div class="bc-num">98%</div>
+        <p>Clientes que recomendam e voltam para novos projetos.</p>
+      </div>
+      <div class="bc b4">
+        <div class="bc-ico">🎨</div>
+        <p class="bc-tag">Paleta</p>
+        <h3 style="font-size:1.15rem">Cores ilimitadas</h3>
+        <p style="font-size:.84rem">Trabalhamos com todas as marcas e linhas premium do mercado.</p>
+      </div>
+      <div class="bc b5">
+        <div class="bc-ico">📋</div>
+        <p class="bc-tag">Processo</p>
+        <h3 style="font-size:1.15rem">Do orçamento à entrega</h3>
+        <p style="font-size:.84rem">Fluxo claro e comunicação aberta em todas as etapas.</p>
+      </div>
+      <div class="bc b6">
+        <div class="bc-ico">🛡️</div>
+        <p class="bc-tag">Garantia</p>
+        <h3 style="font-size:1.15rem">Trabalho garantido</h3>
+        <p style="font-size:.84rem">Retornamos para corrigir qualquer imperfeição sem custo adicional.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ SERVIÇOS ═══ -->
+  <section id="servicos">
+    <div class="srv-header reveal">
+      <div>
+        <p class="s-eyebrow"><span class="s-eline"></span>O Que Fazemos</p>
+        <h2 class="s-title">Serviços com<br/>espectro completo</h2>
+      </div>
+      <p class="s-lead" style="max-width:340px">Cada espaço tem suas particularidades. A Prisma tem o serviço certo para cada necessidade.</p>
+    </div>
+    <div class="srv-grid reveal" style="transition-delay:.1s">
+      <div class="srv-card" data-i="0"><p class="srv-num">01</p><h4>Pintura Interna</h4><p>Salas, quartos, cozinhas e banheiros com acabamento impecável. Protegemos todos os móveis e pisos durante a execução.</p></div>
+      <div class="srv-card" data-i="1"><p class="srv-num">02</p><h4>Pintura Externa &amp; Fachada</h4><p>Revitalização de fachadas com produtos de alta resistência. Valorizamos a primeira impressão do seu imóvel.</p></div>
+      <div class="srv-card" data-i="2"><p class="srv-num">03</p><h4>Texturas e Grafiato</h4><p>Efeitos decorativos únicos que adicionam personalidade e elegância. Textura cimentícia, marmorizado, suedine e mais.</p></div>
+      <div class="srv-card" data-i="3"><p class="srv-num">04</p><h4>Impermeabilização</h4><p>Proteção contra umidade em lajes, banheiros, calhas e telhados. Solução definitiva para infiltrações.</p></div>
+      <div class="srv-card" data-i="4"><p class="srv-num">05</p><h4>Massa Corrida &amp; Gesso</h4><p>Preparação de superfícies com qualidade superior. Paredes lisas e niveladas como base para um resultado perfeito.</p></div>
+      <div class="srv-card" data-i="5"><p class="srv-num">06</p><h4>Manutenção e Reparo</h4><p>Reparos pontuais, retoques e pequenas reformas. Mantenha sua residência sempre renovada sem grandes intervenções.</p></div>
+    </div>
+  </section>
+
+  <!-- ═══ DIFERENCIAIS ═══ -->
+  <section id="diferenciais">
+    <div class="reveal">
+      <p class="s-eyebrow"><span class="s-eline"></span>Por Que a Prisma</p>
+      <h2 class="s-title">O que nos faz<br/>diferentes</h2>
+    </div>
+    <div class="dif-layout">
+      <div class="dif-visual reveal">
+        <div class="orbit or1"></div>
+        <div class="orbit or2"></div>
+        <div class="orbit or3"></div>
+        <div class="prism-c">
+          <div class="prism-ltr">P</div>
+          <div class="prism-lbl">Prisma</div>
+        </div>
+      </div>
+      <ul class="dif-list reveal" style="transition-delay:.14s">
+        <li class="dif-item"><span class="dif-idx">01</span><div><h5>Gestão próxima e transparente</h5><p>Acompanhamento direto do início ao fim. Você sempre sabe o que está acontecendo no seu projeto, sem intermediários desnecessários.</p></div></li>
+        <li class="dif-item"><span class="dif-idx">02</span><div><h5>Logística impecável</h5><p>Equipe coordenada, materiais na hora certa e cronograma respeitado. Seu tempo é valioso e tratamos assim.</p></div></li>
+        <li class="dif-item"><span class="dif-idx">03</span><div><h5>Atendimento personalizado</h5><p>Cada projeto é único. Escutamos suas necessidades e adaptamos tudo ao seu orçamento e expectativas.</p></div></li>
+        <li class="dif-item"><span class="dif-idx">04</span><div><h5>Pagamento direto e seguro</h5><p>Toda negociação financeira é feita diretamente com o responsável pela Prisma — sem intermediários, sem surpresas.</p></div></li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ═══ DEPOIMENTOS ═══ -->
+  <section id="depoimentos">
+    <div class="reveal">
+      <p class="s-eyebrow"><span class="s-eline"></span>Clientes</p>
+      <h2 class="s-title">O que dizem<br/>sobre nós</h2>
+    </div>
+    <div class="testi-wrap reveal" style="transition-delay:.18s">
+      <div class="testi-track" id="testi-track"></div>
+    </div>
+  </section>
+
+  <!-- ═══ ORÇAMENTO ═══ -->
+  <section id="orcamento">
+    <div class="orc-layout">
+      <div class="orc-info reveal">
+        <p class="s-eyebrow"><span class="s-eline"></span>Orçamento Gratuito</p>
+        <h2 class="s-title">Vamos transformar<br/>seu espaço</h2>
+        <h3>Solicite sem compromisso</h3>
+        <p>Preencha o formulário e entraremos em contato para entender melhor seu projeto. O orçamento é gratuito e a visita técnica também.</p>
+        <ul class="orc-hi">
+          <li>Resposta em até 24 horas</li>
+          <li>Visita técnica gratuita</li>
+          <li>Orçamento detalhado e transparente</li>
+          <li>Sem taxa de deslocamento na região</li>
+          <li>Pagamento negociado diretamente, com total segurança</li>
+        </ul>
+      </div>
+      <div class="reveal" style="transition-delay:.14s">
+        <div class="orc-form">
+          <div id="fc">
+            <p class="f-title">Solicitar Orçamento</p>
+            <p class="f-sub">Campos marcados com * são obrigatórios</p>
+            <div class="f-grid">
+              <div class="fg"><label>Nome *</label><input type="text" id="fn" placeholder="Seu nome" /></div>
+              <div class="fg"><label>Telefone / WhatsApp *</label><input type="tel" id="ft" placeholder="(00) 00000-0000" /></div>
+              <div class="fg full"><label>Endereço ou Bairro *</label><input type="text" id="fe" placeholder="Ex: Rua das Flores, 120 — Jardim América" /></div>
+              <div class="fg">
+                <label>Tipo de Serviço *</label>
+                <select id="fs">
+                  <option value="">Selecione...</option>
+                  <option>Pintura Interna</option>
+                  <option>Pintura Externa / Fachada</option>
+                  <option>Textura / Grafiato</option>
+                  <option>Impermeabilização</option>
+                  <option>Massa Corrida / Gesso</option>
+                  <option>Manutenção e Reparo</option>
+                  <option>Mais de um serviço</option>
+                </select>
+              </div>
+              <div class="fg">
+                <label>Tamanho Estimado</label>
+                <select>
+                  <option value="">Selecione...</option>
+                  <option>Até 50 m²</option>
+                  <option>50 – 100 m²</option>
+                  <option>100 – 200 m²</option>
+                  <option>Acima de 200 m²</option>
+                  <option>Não sei informar</option>
+                </select>
+              </div>
+              <div class="fg full"><label>Detalhes do Projeto</label><textarea id="fd" placeholder="Descreva o que precisa ser feito, quantos cômodos, reparos necessários, etc."></textarea></div>
+            </div>
+            <div class="f-notice">
+              <span style="flex-shrink:0;margin-top:.05rem">ℹ</span>
+              <span><strong>Pagamento 100% seguro:</strong> Nenhum valor é processado por este site. Todo o acerto financeiro é realizado diretamente com o responsável pela Prisma, garantindo total transparência.</span>
+            </div>
+            <button class="btn-sub" id="bsub" onclick="doSend()">Enviar Solicitação de Orçamento &rarr;</button>
+          </div>
+          <div class="f-success" id="fsuc">
+            <div class="f-success-ico">✦</div>
+            <h4>Solicitação Recebida!</h4>
+            <p>Obrigado pelo contato. Em breve o responsável da Prisma entrará em contato pelo número informado para agendar uma <strong>visita técnica gratuita</strong> e apresentar um orçamento detalhado.</p>
+            <br/>
+            <p style="font-size:.8rem;color:var(--c-muted2)">Você também pode entrar em contato diretamente pelo WhatsApp para agilizar o atendimento.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ CONTATO ═══ -->
+  <section id="contato">
+    <div class="ct-inner">
+      <div class="ct-brand reveal">
+        <a class="nav-logo" href="#hero"><span>Prisma</span></a>
+        <p>Pintura residencial com qualidade, cuidado e atenção pessoal. Transformamos o seu espaço com quem realmente entende do serviço.</p>
+      </div>
+      <div class="reveal" style="transition-delay:.1s">
+        <p class="ct-col-ttl">Contato</p>
+        <div class="ct-links">
+          <a href="https://wa.me/5500000000000" class="ct-link" target="_blank"><span class="ct-dot"></span>WhatsApp — Falar com a Prisma</a>
+          <a href="tel:+5500000000000" class="ct-link"><span class="ct-dot" style="background:var(--c-blue);box-shadow:0 0 7px rgba(74,144,217,.5)"></span>Ligar agora</a>
+          <a href="mailto:contato@prisma.com.br" class="ct-link"><span class="ct-dot" style="background:var(--c-teal);box-shadow:0 0 7px rgba(15,158,138,.5)"></span>E-mail</a>
+        </div>
+      </div>
+      <div class="reveal" style="transition-delay:.2s">
+        <a href="#orcamento" class="btn-p">Solicitar Orçamento &rarr;</a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <p>© 2025 Prisma Pintura Residencial — Todos os direitos reservados</p>
+    <span>Feito com cuidado para quem cuida do seu lar</span>
+  </footer>
+
+  <script>
+  (function(){
+    'use strict';
+
+    /* ── Cursor — apenas mouse (pointer: fine) ── */
+    var isFine = window.matchMedia('(pointer:fine)').matches;
+    if(isFine){
+      var cur = document.getElementById('cursor');
+      var crn = document.getElementById('cursor-ring');
+      var mx=window.innerWidth/2, my=window.innerHeight/2, rx=mx, ry=my;
+      document.addEventListener('mousemove', function(e){ mx=e.clientX; my=e.clientY; },{passive:true});
+      (function tick(){
+        cur.style.left=mx+'px'; cur.style.top=my+'px';
+        rx+=(mx-rx)*.09; ry+=(my-ry)*.09;
+        crn.style.left=rx+'px'; crn.style.top=ry+'px';
+        requestAnimationFrame(tick);
+      })();
+      document.querySelectorAll('a,button,input,select,textarea').forEach(function(el){
+        el.addEventListener('mouseenter',function(){
+          cur.style.width='22px'; cur.style.height='22px';
+          crn.style.borderColor='rgba(45,212,160,.65)';
+        });
+        el.addEventListener('mouseleave',function(){
+          cur.style.width='8px'; cur.style.height='8px';
+          crn.style.borderColor='rgba(45,212,160,.32)';
+        });
+      });
+    }
+
+    /* ── Nav scroll ── */
+    var nav=document.getElementById('nav');
+    window.addEventListener('scroll',function(){ nav.classList.toggle('scrolled',window.scrollY>60); },{passive:true});
+
+    /* ── Scroll reveal ── */
+    var els=document.querySelectorAll('.reveal');
+    var obs=new IntersectionObserver(function(entries){
+      entries.forEach(function(e){
+        if(e.isIntersecting){ e.target.classList.add('on'); obs.unobserve(e.target); }
+      });
+    },{threshold:.10,rootMargin:'0px 0px -40px 0px'});
+    els.forEach(function(el){ obs.observe(el); });
+
+    /* ── Depoimentos ── */
+    var data=[
+      {t:'O acabamento ficou perfeito! Pintaram toda a casa em 3 dias sem deixar nenhuma sujeira. Recomendo demais.',a:'Ana C. · São Paulo'},
+      {t:'Profissionalismo do início ao fim. O orçamento foi claro, cumpriram o prazo e o resultado superou expectativas.',a:'Roberto M. · Guarulhos'},
+      {t:'Textura na sala ficou incrível. Já indiquei para dois vizinhos e todos adoraram o trabalho.',a:'Fernanda L. · Osasco'},
+      {t:'Fiz a fachada da minha casa e ficou nova! Atendimento excelente e preço justo. Com certeza vou chamar novamente.',a:'Carlos H. · Cotia'},
+      {t:'Resolveram um problema de umidade que eu tinha há anos. Serviço caprichado e equipe muito educada.',a:'Marcia S. · Santo André'},
+      {t:'Pontualidade e organização impecáveis. Protegeram todos os móveis e deixaram tudo limpo após o serviço.',a:'Paulo R. · Mauá'},
+    ];
+    var track=document.getElementById('testi-track');
+    data.concat(data).forEach(function(d){
+      var c=document.createElement('div'); c.className='t-card';
+      c.innerHTML='<div class="t-stars">★★★★★</div><p class="t-text">"'+d.t+'"</p><p class="t-auth">'+d.a+'</p>';
+      track.appendChild(c);
+    });
+
+    /* ── Máscara telefone ── */
+    var ti=document.getElementById('ft');
+    if(ti) ti.addEventListener('input',function(){
+      var v=this.value.replace(/\D/g,'').slice(0,11);
+      if(v.length>=2) v='('+v.slice(0,2)+') '+v.slice(2);
+      if(v.length>=10) v=v.slice(0,10)+'-'+v.slice(10);
+      this.value=v;
+    });
+
+    /* ── Formulário ── */
+    window.doSend=function(){
+      var n=document.getElementById('fn').value.trim();
+      var t=document.getElementById('ft').value.trim();
+      var e=document.getElementById('fe').value.trim();
+      var s=document.getElementById('fs').value;
+      if(!n||!t||!e||!s){
+        var b=document.getElementById('bsub'), orig=b.textContent;
+        b.style.background='var(--c-navy)'; b.style.color='rgba(180,210,228,.65)';
+        b.textContent='⚠ Preencha os campos obrigatórios';
+        setTimeout(function(){ b.style.background=''; b.style.color=''; b.textContent=orig; },2600);
+        return;
+      }
+      var fc=document.getElementById('fc');
+      fc.style.opacity='0'; fc.style.transition='opacity .4s var(--ease-expo)';
+      setTimeout(function(){
+        fc.style.display='none';
+        document.getElementById('fsuc').classList.add('on');
+      },380);
+    };
+
+  }());
+  </script>
+</body>
+</html>
